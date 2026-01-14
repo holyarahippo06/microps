@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+build/
+dist/
+*.egg-info/
+
+# C-Extensions (The binaries)
+*.so
+*.pyd
+*.o
+*.a
+*.out
+
+# Environments
+.venv/
+microps_venv/
+
+# Hidden OS files
+.DS_Store
