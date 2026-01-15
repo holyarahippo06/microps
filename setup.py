@@ -28,7 +28,7 @@ core_extension = Extension(
 
 setup(
     name='microps',
-    version='1.0.0',
+    version='1.1.0',
     description='Micro Operations - Language semantics in Python via C extensions',
     author='holyarahippo06',
     packages=['microps', 'microps.wrappers'],

@@ -71,7 +71,7 @@ PyObject* micro_is_callable(PyObject* a);
 PyObject* micro_obj_new(void);
 PyObject* micro_obj_get(PyObject* obj, PyObject* key);
 PyObject* micro_obj_set(PyObject* obj, PyObject* key, PyObject* val);
-PyObject* micro_del(PyObject* obj, PyObject* key);
+PyObject* micro_del_op(PyObject* obj, PyObject* key);
 PyObject* micro_keys(PyObject* a);
 PyObject* micro_values(PyObject* dict);
 
