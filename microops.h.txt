@@ -1,0 +1,76 @@
+// FILE: microps/include/microops.h
+#ifndef MICROOPS_H
+#define MICROOPS_H
+#include <Python.h>
+
+// Arithmetic
+PyObject* micro_add(PyObject* a, PyObject* b);
+PyObject* micro_sub(PyObject* a, PyObject* b);
+PyObject* micro_mul(PyObject* a, PyObject* b);
+PyObject* micro_div(PyObject* a, PyObject* b);
+PyObject* micro_mod(PyObject* a, PyObject* b);
+PyObject* micro_pow(PyObject* a, PyObject* b);
+PyObject* micro_floor_div(PyObject* a, PyObject* b);
+PyObject* micro_neg(PyObject* a);
+PyObject* micro_abs(PyObject* a);
+
+// Comparison
+PyObject* micro_eq(PyObject* a, PyObject* b);
+PyObject* micro_ne(PyObject* a, PyObject* b);
+PyObject* micro_lt(PyObject* a, PyObject* b);
+PyObject* micro_le(PyObject* a, PyObject* b);
+PyObject* micro_gt(PyObject* a, PyObject* b);
+PyObject* micro_ge(PyObject* a, PyObject* b);
+
+// Bitwise
+PyObject* micro_bit_and(PyObject* a, PyObject* b);
+PyObject* micro_bit_or(PyObject* a, PyObject* b);
+PyObject* micro_bit_xor(PyObject* a, PyObject* b);
+PyObject* micro_bit_not(PyObject* a);
+PyObject* micro_lshift(PyObject* a, PyObject* b);
+PyObject* micro_rshift(PyObject* a, PyObject* b);
+
+// Logical
+PyObject* micro_not(PyObject* a);
+PyObject* micro_truthy(PyObject* a);
+
+// Type conversions
+PyObject* micro_to_int(PyObject* a);
+PyObject* micro_to_float(PyObject* a);
+PyObject* micro_to_str(PyObject* a);
+PyObject* micro_to_bool(PyObject* a);
+
+// Type info
+PyObject* micro_len(PyObject* a);
+PyObject* micro_type(PyObject* a);
+
+// Object operations
+PyObject* micro_obj_new(void);
+PyObject* micro_obj_get(PyObject* obj, PyObject* key);
+PyObject* micro_obj_set(PyObject* obj, PyObject* key, PyObject* val);
+PyObject* micro_del(PyObject* obj, PyObject* key);
+PyObject* micro_keys(PyObject* a);
+PyObject* micro_values(PyObject* dict);
+
+// List operations
+PyObject* micro_list_new(void);
+PyObject* micro_append(PyObject* list, PyObject* item);
+PyObject* micro_pop(PyObject* list, PyObject* index);
+PyObject* micro_reverse(PyObject* list);
+
+// Container operations
+PyObject* micro_contains(PyObject* container, PyObject* item);
+PyObject* micro_slice(PyObject* seq, PyObject* start, PyObject* end);
+PyObject* micro_concat(PyObject* a, PyObject* b);
+
+// String operations
+PyObject* micro_str_upper(PyObject* s);
+PyObject* micro_str_lower(PyObject* s);
+PyObject* micro_str_split(PyObject* s, PyObject* sep);
+PyObject* micro_str_join(PyObject* sep, PyObject* iterable);
+PyObject* micro_str_replace(PyObject* s, PyObject* old, PyObject* new);
+
+// Special operations
+PyObject* micro_inc_get(PyObject* obj, PyObject* key);
+
+#endif

@@ -1,0 +1,950 @@
+// abs.c
+#include "microops.h"
+PyObject* micro_abs(PyObject* a) { 
+    return PyNumber_Absolute(a); 
+}
+
+
+// add.c
+#include "microops.h"
+PyObject* micro_add(PyObject* a, PyObject* b) { return PyNumber_Add(a, b); }
+
+
+// append.c
+#include "microops.h"
+PyObject* micro_append(PyObject* list, PyObject* item) { 
+    if (PyList_Check(list)) {
+        PyList_Append(list, item);
+    }
+    Py_RETURN_NONE;
+}
+
+
+// bit_and.c
+#include "microops.h"
+PyObject* micro_bit_and(PyObject* a, PyObject* b) { 
+    return PyNumber_And(a, b); 
+}
+
+
+// bit_not.c
+#include "microops.h"
+PyObject* micro_bit_not(PyObject* a) { 
+    return PyNumber_Invert(a); 
+}
+
+
+// bit_or.c
+// FILE: microps/microops/bit_or.c
+// ============================================
+#include "microops.h"
+PyObject* micro_bit_or(PyObject* a, PyObject* b) { 
+    return PyNumber_Or(a, b); 
+}
+
+
+// bit_xor.c
+#include "microops.h"
+PyObject* micro_bit_xor(PyObject* a, PyObject* b) { 
+    return PyNumber_Xor(a, b); 
+}
+
+
+// clamp.c
+#include "microops.h"
+PyObject* micro_clamp(PyObject* val, PyObject* min_val, PyObject* max_val) {
+    PyObject* result = val;
+    if (PyObject_RichCompareBool(val, min_val, Py_LT)) result = min_val;
+    else if (PyObject_RichCompareBool(val, max_val, Py_GT)) result = max_val;
+    Py_INCREF(result);
+    return result;
+}
+
+
+// clear.c
+#include "microops.h"
+PyObject* micro_clear(PyObject* container) {
+    if (PyList_Check(container)) {
+        PyList_SetSlice(container, 0, PyList_Size(container), NULL);
+    } else if (PyDict_Check(container)) {
+        PyDict_Clear(container);
+    }
+    Py_RETURN_NONE;
+}
+
+
+// concat.c
+#include "microops.h"
+PyObject* micro_concat(PyObject* a, PyObject* b) { 
+    return PySequence_Concat(a, b);
+}
+
+
+// contains.c
+#include "microops.h"
+PyObject* micro_contains(PyObject* container, PyObject* item) { 
+    int result = PySequence_Contains(container, item);
+    if (result < 0) { PyErr_Clear(); return PyBool_FromLong(0); }
+    return PyBool_FromLong(result);
+}
+
+
+// count.c
+#include "microops.h"
+PyObject* micro_count(PyObject* seq, PyObject* item) {
+    Py_ssize_t size = PySequence_Size(seq);
+    Py_ssize_t count = 0;
+    for (Py_ssize_t i = 0; i < size; i++) {
+        PyObject* elem = PySequence_GetItem(seq, i);
+        int cmp = PyObject_RichCompareBool(elem, item, Py_EQ);
+        Py_DECREF(elem);
+        if (cmp == 1) count++;
+        if (cmp < 0) return NULL;
+    }
+    return PyLong_FromSsize_t(count);
+}
+
+
+// del.c
+#include "microops.h"
+PyObject* micro_del(PyObject* o, PyObject* k) { if(PyObject_DelItem(o,k)<0)PyErr_Clear(); Py_RETURN_NONE; }
+
+
+// dict_items.c
+#include "microops.h"
+PyObject* micro_dict_items(PyObject* dict) {
+    if (!PyDict_Check(dict)) Py_RETURN_NONE;
+    return PyDict_Items(dict);
+}
+
+
+// dict_merge.c
+#include "microops.h"
+PyObject* micro_dict_merge(PyObject* dict1, PyObject* dict2) {
+    if (!PyDict_Check(dict1) || !PyDict_Check(dict2)) Py_RETURN_NONE;
+    PyDict_Merge(dict1, dict2, 1);
+    Py_RETURN_NONE;
+}
+
+
+// dict_pop.c
+#include "microops.h"
+PyObject* micro_dict_pop(PyObject* dict, PyObject* key, PyObject* default_val) {
+    if (!PyDict_Check(dict)) {
+        Py_INCREF(default_val);
+        return default_val;
+    }
+    PyObject* value = PyDict_GetItem(dict, key);
+    if (value) {
+        Py_INCREF(value);
+        PyDict_DelItem(dict, key);
+        return value;
+    }
+    Py_INCREF(default_val);
+    return default_val;
+}
+
+
+// dict_setdefault.c
+#include "microops.h"
+PyObject* micro_dict_setdefault(PyObject* dict, PyObject* key, PyObject* default_val) {
+    if (!PyDict_Check(dict)) {
+        Py_INCREF(default_val);
+        return default_val;
+    }
+    PyObject* value = PyDict_GetItem(dict, key);
+    if (value) {
+        Py_INCREF(value);
+        return value;
+    }
+    PyDict_SetItem(dict, key, default_val);
+    Py_INCREF(default_val);
+    return default_val;
+}
+
+
+// dict_update.c
+#include "microops.h"
+PyObject* micro_dict_update(PyObject* dict, PyObject* other) {
+    if (!PyDict_Check(dict)) Py_RETURN_NONE;
+    PyDict_Update(dict, other);
+    Py_RETURN_NONE;
+}
+
+
+// div.c
+#include "microops.h"
+PyObject* micro_div(PyObject* a, PyObject* b) { return PyNumber_TrueDivide(a, b); }
+
+
+// divmod.c
+#include "microops.h"
+PyObject* micro_divmod(PyObject* a, PyObject* b) {
+    PyObject* div = PyNumber_FloorDivide(a, b);
+    PyObject* mod = PyNumber_Remainder(a, b);
+    PyObject* result = PyTuple_Pack(2, div, mod);
+    Py_DECREF(div);
+    Py_DECREF(mod);
+    return result;
+}
+
+
+// eq.c
+#include "microops.h"
+PyObject* micro_eq(PyObject* a, PyObject* b) { return PyObject_RichCompare(a, b, Py_EQ); }
+
+
+// extend.c
+#include "microops.h"
+PyObject* micro_extend(PyObject* list, PyObject* iterable) {
+    if (PyList_Check(list)) {
+        PyObject* iter = PyObject_GetIter(iterable);
+        if (!iter) return NULL;
+        PyObject* item;
+        while ((item = PyIter_Next(iter))) {
+            PyList_Append(list, item);
+            Py_DECREF(item);
+        }
+        Py_DECREF(iter);
+    }
+    Py_RETURN_NONE;
+}
+
+
+// filter_func.c
+#include "microops.h"
+PyObject* micro_filter_func(PyObject* func, PyObject* iterable) {
+    PyObject* result = PyList_New(0);
+    PyObject* iter = PyObject_GetIter(iterable);
+    if (!iter) return NULL;
+    PyObject* item;
+    while ((item = PyIter_Next(iter))) {
+        PyObject* keep = PyObject_CallFunctionObjArgs(func, item, NULL);
+        if (!keep) {
+            Py_DECREF(item);
+            Py_DECREF(iter);
+            Py_DECREF(result);
+            return NULL;
+        }
+        if (PyObject_IsTrue(keep)) {
+            PyList_Append(result, item);
+        }
+        Py_DECREF(keep);
+        Py_DECREF(item);
+    }
+    Py_DECREF(iter);
+    return result;
+}
+
+
+// find.c
+#include "microops.h"
+PyObject* micro_find(PyObject* seq, PyObject* item) {
+    Py_ssize_t size = PySequence_Size(seq);
+    for (Py_ssize_t i = 0; i < size; i++) {
+        PyObject* elem = PySequence_GetItem(seq, i);
+        int cmp = PyObject_RichCompareBool(elem, item, Py_EQ);
+        Py_DECREF(elem);
+        if (cmp == 1) return PyLong_FromSsize_t(i);
+        if (cmp < 0) return NULL;
+    }
+    return PyLong_FromLong(-1);
+}
+
+
+// floor_div.c
+#include "microops.h"
+PyObject* micro_floor_div(PyObject* a, PyObject* b) { 
+    return PyNumber_FloorDivide(a, b); 
+}
+
+
+// ge.c
+#include "microops.h"
+PyObject* micro_ge(PyObject* a, PyObject* b) { 
+    return PyObject_RichCompare(a, b, Py_GE); 
+}
+
+
+// gt.c
+#include "microops.h"
+PyObject* micro_gt(PyObject* a, PyObject* b) { 
+    return PyObject_RichCompare(a, b, Py_GT); 
+}
+
+
+// hash_val.c
+#include "microops.h"
+PyObject* micro_hash_val(PyObject* a) {
+    Py_hash_t hash = PyObject_Hash(a);
+    if (hash == -1 && PyErr_Occurred()) return NULL;
+    return PyLong_FromSsize_t(hash);
+}
+
+
+// id_val.c
+#include "microops.h"
+PyObject* micro_id_val(PyObject* a) {
+    return PyLong_FromVoidPtr(a);
+}
+
+
+// inc_get.c
+#include "microops.h"
+PyObject* micro_inc_get(PyObject* o, PyObject* k) {
+    PyObject* v = PyObject_GetItem(o, k);
+    if (!v) { PyErr_Clear(); v = PyLong_FromLong(0); }
+    PyObject* one = PyLong_FromLong(1);
+    PyObject* inc = PyNumber_Add(v, one);
+    PyObject_SetItem(o, k, inc);
+    Py_DECREF(one); Py_DECREF(inc);
+    return v; // Return old value
+}
+
+
+// insert.c
+#include "microops.h"
+PyObject* micro_insert(PyObject* list, PyObject* index, PyObject* item) {
+    if (PyList_Check(list)) {
+        Py_ssize_t idx = PyLong_AsSsize_t(index);
+        PyList_Insert(list, idx, item);
+    }
+    Py_RETURN_NONE;
+}
+
+
+// is_bool.c
+#include "microops.h"
+PyObject* micro_is_bool(PyObject* a) {
+    return PyBool_FromLong(PyBool_Check(a));
+}
+
+
+// is_callable.c
+#include "microops.h"
+PyObject* micro_is_callable(PyObject* a) {
+    return PyBool_FromLong(PyCallable_Check(a));
+}
+
+
+// is_dict.c
+#include "microops.h"
+PyObject* micro_is_dict(PyObject* a) {
+    return PyBool_FromLong(PyDict_Check(a));
+}
+
+
+// is_float.c
+#include "microops.h"
+PyObject* micro_is_float(PyObject* a) {
+    return PyBool_FromLong(PyFloat_Check(a));
+}
+
+
+// is_identical.c
+#include "microops.h"
+PyObject* micro_is_identical(PyObject* a, PyObject* b) {
+    return PyBool_FromLong(a == b);
+}
+
+
+// is_int.c
+#include "microops.h"
+PyObject* micro_is_int(PyObject* a) {
+    return PyBool_FromLong(PyLong_Check(a));
+}
+
+
+// is_list.c
+#include "microops.h"
+PyObject* micro_is_list(PyObject* a) {
+    return PyBool_FromLong(PyList_Check(a));
+}
+
+
+// is_none.c
+#include "microops.h"
+PyObject* micro_is_none(PyObject* a) {
+    return PyBool_FromLong(a == Py_None);
+}
+
+
+// is_sorted.c
+#include "microops.h"
+PyObject* micro_is_sorted(PyObject* seq) {
+    Py_ssize_t size = PySequence_Size(seq);
+    if (size <= 1) return PyBool_FromLong(1);
+    for (Py_ssize_t i = 0; i < size - 1; i++) {
+        PyObject* a = PySequence_GetItem(seq, i);
+        PyObject* b = PySequence_GetItem(seq, i + 1);
+        int cmp = PyObject_RichCompareBool(a, b, Py_GT);
+        Py_DECREF(a);
+        Py_DECREF(b);
+        if (cmp < 0) return NULL;
+        if (cmp) return PyBool_FromLong(0);
+    }
+    return PyBool_FromLong(1);
+}
+
+
+// is_str.c
+#include "microops.h"
+PyObject* micro_is_str(PyObject* a) {
+    return PyBool_FromLong(PyUnicode_Check(a));
+}
+
+
+// is_tuple.c
+#include "microops.h"
+PyObject* micro_is_tuple(PyObject* a) {
+    return PyBool_FromLong(PyTuple_Check(a));
+}
+
+
+// keys.c
+#include "microops.h"
+PyObject* micro_keys(PyObject* a) { return PyDict_Keys(a); }
+
+
+// le.c
+#include "microops.h"
+PyObject* micro_le(PyObject* a, PyObject* b) { 
+    return PyObject_RichCompare(a, b, Py_LE); 
+}
+
+
+// len.c
+#include "microops.h"
+PyObject* micro_len(PyObject* a) { return PyLong_FromSsize_t(PyObject_Size(a)); }
+
+
+// list_new.c
+#include "microops.h"
+PyObject* micro_list_new(void) { 
+    return PyList_New(0); 
+}
+
+
+// lshift.c
+#include "microops.h"
+PyObject* micro_lshift(PyObject* a, PyObject* b) { 
+    return PyNumber_Lshift(a, b); 
+}
+
+
+// lt.c
+#include "microops.h"
+PyObject* micro_lt(PyObject* a, PyObject* b) { 
+    return PyObject_RichCompare(a, b, Py_LT); 
+}
+
+
+// map_func.c
+#include "microops.h"
+PyObject* micro_map_func(PyObject* func, PyObject* iterable) {
+    PyObject* result = PyList_New(0);
+    PyObject* iter = PyObject_GetIter(iterable);
+    if (!iter) return NULL;
+    PyObject* item;
+    while ((item = PyIter_Next(iter))) {
+        PyObject* mapped = PyObject_CallFunctionObjArgs(func, item, NULL);
+        Py_DECREF(item);
+        if (!mapped) {
+            Py_DECREF(iter);
+            Py_DECREF(result);
+            return NULL;
+        }
+        PyList_Append(result, mapped);
+        Py_DECREF(mapped);
+    }
+    Py_DECREF(iter);
+    return result;
+}
+
+
+// max.c
+#include "microops.h"
+PyObject* micro_max(PyObject* a, PyObject* b) {
+    int cmp = PyObject_RichCompareBool(a, b, Py_GT);
+    if (cmp < 0) return NULL;
+    Py_INCREF(cmp ? a : b);
+    return cmp ? a : b;
+}
+
+
+// min.c
+#include "microops.h"
+PyObject* micro_min(PyObject* a, PyObject* b) {
+    int cmp = PyObject_RichCompareBool(a, b, Py_LT);
+    if (cmp < 0) return NULL;
+    Py_INCREF(cmp ? a : b);
+    return cmp ? a : b;
+}
+
+
+// mod.c
+#include "microops.h"
+PyObject* micro_mod(PyObject* a, PyObject* b) { return PyNumber_Remainder(a, b); }
+
+
+// mul.c
+#include "microops.h"
+PyObject* micro_mul(PyObject* a, PyObject* b) { return PyNumber_Multiply(a, b); }
+
+
+// ne.c
+#include "microops.h"
+PyObject* micro_ne(PyObject* a, PyObject* b) { 
+    return PyObject_RichCompare(a, b, Py_NE); 
+}
+
+
+// neg.c
+#include "microops.h"
+PyObject* micro_neg(PyObject* a) { 
+    return PyNumber_Negative(a); 
+}
+
+
+// not.c
+#include "microops.h"
+PyObject* micro_not(PyObject* a) { return PyBool_FromLong(!PyObject_IsTrue(a)); }
+
+
+// obj_get.c
+#include "microops.h"
+PyObject* micro_obj_get(PyObject* o, PyObject* k) { PyObject* r=PyObject_GetItem(o,k); if(!r){PyErr_Clear(); Py_RETURN_NONE;} return r; }
+
+
+// obj_new.c
+#include "microops.h"
+PyObject* micro_obj_new(void) { return PyDict_New(); }
+
+
+// obj_set.c
+#include "microops.h"
+PyObject* micro_obj_set(PyObject* o, PyObject* k, PyObject* v) { PyObject_SetItem(o,k,v); Py_RETURN_NONE; }
+
+
+// pop.c
+#include "microops.h"
+PyObject* micro_pop(PyObject* list, PyObject* index) { 
+    if (PyList_Check(list)) {
+        Py_ssize_t idx = PyLong_AsSsize_t(index);
+        if (idx < 0 || idx >= PyList_Size(list)) {
+            Py_RETURN_NONE;
+        }
+        PyObject* item = PyList_GetItem(list, idx);
+        Py_INCREF(item);
+        PySequence_DelItem(list, idx);
+        return item;
+    }
+    Py_RETURN_NONE;
+}
+
+
+// popcount.c
+#include "microops.h"
+PyObject* micro_popcount(PyObject* a) {
+    unsigned long val = PyLong_AsUnsignedLong(a);
+    int count = 0;
+    while (val) {
+        count += val & 1;
+        val >>= 1;
+    }
+    return PyLong_FromLong(count);
+}
+
+
+// pow.c
+#include "microops.h"
+PyObject* micro_pow(PyObject* a, PyObject* b) { return PyNumber_Power(a, b, Py_None); }
+
+
+// reduce_func.c
+#include "microops.h"
+PyObject* micro_reduce_func(PyObject* func, PyObject* iterable, PyObject* initial) {
+    PyObject* iter = PyObject_GetIter(iterable);
+    if (!iter) return NULL;
+    PyObject* accumulator = initial;
+    Py_INCREF(accumulator);
+    PyObject* item;
+    while ((item = PyIter_Next(iter))) {
+        PyObject* new_acc = PyObject_CallFunctionObjArgs(func, accumulator, item, NULL);
+        Py_DECREF(accumulator);
+        Py_DECREF(item);
+        if (!new_acc) {
+            Py_DECREF(iter);
+            return NULL;
+        }
+        accumulator = new_acc;
+    }
+    Py_DECREF(iter);
+    return accumulator;
+}
+
+
+// reverse.c
+#include "microops.h"
+PyObject* micro_reverse(PyObject* list) { 
+    if (PyList_Check(list)) {
+        PyList_Reverse(list);
+    }
+    Py_RETURN_NONE;
+}
+
+
+// rfind.c
+#include "microops.h"
+PyObject* micro_rfind(PyObject* seq, PyObject* item) {
+    Py_ssize_t size = PySequence_Size(seq);
+    for (Py_ssize_t i = size - 1; i >= 0; i--) {
+        PyObject* elem = PySequence_GetItem(seq, i);
+        int cmp = PyObject_RichCompareBool(elem, item, Py_EQ);
+        Py_DECREF(elem);
+        if (cmp == 1) return PyLong_FromSsize_t(i);
+        if (cmp < 0) return NULL;
+    }
+    return PyLong_FromLong(-1);
+}
+
+
+// rotl.c
+#include "microops.h"
+PyObject* micro_rotl(PyObject* a, PyObject* b) {
+    long val = PyLong_AsLong(a);
+    long shift = PyLong_AsLong(b);
+    long bits = sizeof(long) * 8;
+    shift = shift % bits;
+    long result = (val << shift) | (val >> (bits - shift));
+    return PyLong_FromLong(result);
+}
+
+
+// rotr.c
+#include "microops.h"
+PyObject* micro_rotr(PyObject* a, PyObject* b) {
+    long val = PyLong_AsLong(a);
+    long shift = PyLong_AsLong(b);
+    long bits = sizeof(long) * 8;
+    shift = shift % bits;
+    long result = (val >> shift) | (val << (bits - shift));
+    return PyLong_FromLong(result);
+}
+
+
+// rshift.c
+#include "microops.h"
+PyObject* micro_rshift(PyObject* a, PyObject* b) { 
+    return PyNumber_Rshift(a, b); 
+}
+
+
+// sign.c
+#include "microops.h"
+PyObject* micro_sign(PyObject* a) {
+    PyObject* zero = PyLong_FromLong(0);
+    int cmp_gt = PyObject_RichCompareBool(a, zero, Py_GT);
+    int cmp_lt = PyObject_RichCompareBool(a, zero, Py_LT);
+    Py_DECREF(zero);
+    return PyLong_FromLong(cmp_gt ? 1 : (cmp_lt ? -1 : 0));
+}
+
+
+// slice.c
+#include "microops.h"
+PyObject* micro_slice(PyObject* seq, PyObject* start, PyObject* end) { 
+    Py_ssize_t s = PyLong_AsSsize_t(start);
+    Py_ssize_t e = PyLong_AsSsize_t(end);
+    return PySequence_GetSlice(seq, s, e);
+}
+
+
+// str_capitalize.c
+#include "microops.h"
+PyObject* micro_str_capitalize(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("capitalize");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_center.c
+#include "microops.h"
+PyObject* micro_str_center(PyObject* s, PyObject* width, PyObject* fill) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(fill)) fill = PyObject_Str(fill);
+    PyObject* method = PyUnicode_FromString("center");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, width, fill, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_contains.c
+#include "microops.h"
+PyObject* micro_str_contains(PyObject* s, PyObject* substring) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(substring)) substring = PyObject_Str(substring);
+    int result = PyUnicode_Contains(s, substring);
+    if (result < 0) return NULL;
+    return PyBool_FromLong(result);
+}
+
+
+// str_count.c
+#include "microops.h"
+PyObject* micro_str_count(PyObject* s, PyObject* substring) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(substring)) substring = PyObject_Str(substring);
+    Py_ssize_t count = PyUnicode_Count(s, substring, 0, PY_SSIZE_T_MAX);
+    return PyLong_FromSsize_t(count);
+}
+
+
+// str_endswith.c
+#include "microops.h"
+PyObject* micro_str_endswith(PyObject* s, PyObject* suffix) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(suffix)) suffix = PyObject_Str(suffix);
+    int result = PyUnicode_Tailmatch(s, suffix, 0, PY_SSIZE_T_MAX, 1);
+    return PyBool_FromLong(result == 1);
+}
+
+
+// str_find.c
+#include "microops.h"
+PyObject* micro_str_find(PyObject* s, PyObject* substring) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(substring)) substring = PyObject_Str(substring);
+    Py_ssize_t pos = PyUnicode_Find(s, substring, 0, PY_SSIZE_T_MAX, 1);
+    return PyLong_FromSsize_t(pos);
+}
+
+
+// str_join.c
+#include "microops.h"
+PyObject* micro_str_join(PyObject* sep, PyObject* iterable) { 
+    if (!PyUnicode_Check(sep)) sep = PyObject_Str(sep);
+    PyObject* method = PyUnicode_FromString("join");
+    PyObject* result = PyObject_CallMethodObjArgs(sep, method, iterable, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_lower.c
+#include "microops.h"
+PyObject* micro_str_lower(PyObject* s) { 
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("lower");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_lstrip.c
+#include "microops.h"
+PyObject* micro_str_lstrip(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("lstrip");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_pad_left.c
+#include "microops.h"
+PyObject* micro_str_pad_left(PyObject* s, PyObject* width, PyObject* fill) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(fill)) fill = PyObject_Str(fill);
+    PyObject* method = PyUnicode_FromString("rjust");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, width, fill, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_pad_right.c
+#include "microops.h"
+PyObject* micro_str_pad_right(PyObject* s, PyObject* width, PyObject* fill) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(fill)) fill = PyObject_Str(fill);
+    PyObject* method = PyUnicode_FromString("ljust");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, width, fill, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_repeat.c
+#include "microops.h"
+PyObject* micro_str_repeat(PyObject* s, PyObject* n) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    return PySequence_Repeat(s, PyLong_AsSsize_t(n));
+}
+
+
+// str_replace.c
+#include "microops.h"
+PyObject* micro_str_replace(PyObject* s, PyObject* old, PyObject* new) { 
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("replace");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, old, new, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_rfind.c
+#include "microops.h"
+PyObject* micro_str_rfind(PyObject* s, PyObject* substring) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(substring)) substring = PyObject_Str(substring);
+    Py_ssize_t pos = PyUnicode_Find(s, substring, 0, PY_SSIZE_T_MAX, -1);
+    return PyLong_FromSsize_t(pos);
+}
+
+
+// str_rstrip.c
+#include "microops.h"
+PyObject* micro_str_rstrip(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("rstrip");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_split.c
+#include "microops.h"
+PyObject* micro_str_split(PyObject* s, PyObject* sep) { 
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("split");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, sep, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_startswith.c
+#include "microops.h"
+PyObject* micro_str_startswith(PyObject* s, PyObject* prefix) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    if (!PyUnicode_Check(prefix)) prefix = PyObject_Str(prefix);
+    int result = PyUnicode_Tailmatch(s, prefix, 0, PY_SSIZE_T_MAX, -1);
+    return PyBool_FromLong(result == 1);
+}
+
+
+// str_strip.c
+#include "microops.h"
+PyObject* micro_str_strip(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("strip");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_swapcase.c
+#include "microops.h"
+PyObject* micro_str_swapcase(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("swapcase");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_title.c
+#include "microops.h"
+PyObject* micro_str_title(PyObject* s) {
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("title");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// str_upper.c
+#include "microops.h"
+PyObject* micro_str_upper(PyObject* s) { 
+    if (!PyUnicode_Check(s)) s = PyObject_Str(s);
+    PyObject* method = PyUnicode_FromString("upper");
+    PyObject* result = PyObject_CallMethodObjArgs(s, method, NULL);
+    Py_DECREF(method);
+    return result;
+}
+
+
+// sub.c
+#include "microops.h"
+PyObject* micro_sub(PyObject* a, PyObject* b) { return PyNumber_Subtract(a, b); }
+
+
+// swap.c
+#include "microops.h"
+PyObject* micro_swap(PyObject* seq, PyObject* i, PyObject* j) {
+    Py_ssize_t idx_i = PyLong_AsSsize_t(i);
+    Py_ssize_t idx_j = PyLong_AsSsize_t(j);
+    PyObject* val_i = PySequence_GetItem(seq, idx_i);
+    PyObject* val_j = PySequence_GetItem(seq, idx_j);
+    PySequence_SetItem(seq, idx_i, val_j);
+    PySequence_SetItem(seq, idx_j, val_i);
+    Py_DECREF(val_i);
+    Py_DECREF(val_j);
+    Py_RETURN_NONE;
+}
+
+
+// to_bool.c
+#include "microops.h"
+PyObject* micro_to_bool(PyObject* a) { 
+    return PyBool_FromLong(PyObject_IsTrue(a)); 
+}
+
+
+// to_float.c
+#include "microops.h"
+PyObject* micro_to_float(PyObject* a) { return PyNumber_Float(a); }
+
+
+// to_int.c
+#include "microops.h"
+PyObject* micro_to_int(PyObject* a) { return PyNumber_Long(a); }
+
+
+// to_str.c
+#include "microops.h"
+PyObject* micro_to_str(PyObject* a) { return PyObject_Str(a); }
+
+
+// truthy.c
+#include "microops.h"
+PyObject* micro_truthy(PyObject* a) { return PyBool_FromLong(PyObject_IsTrue(a)); }
+
+
+// type.c
+#include "microops.h"
+PyObject* micro_type(PyObject* a) { return PyUnicode_FromString(Py_TYPE(a)->tp_name); }
+
+
+// values.c
+#include "microops.h"
+PyObject* micro_values(PyObject* dict) { 
+    if (PyDict_Check(dict)) {
+        return PyDict_Values(dict);
+    }
+    Py_RETURN_NONE;
+}
+
+

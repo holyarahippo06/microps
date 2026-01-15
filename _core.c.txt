@@ -1,0 +1,157 @@
+// FILE: microps/_core.c
+#include <Python.h>
+#include "microops.h"
+static PyObject* _scopes = NULL;
+
+static PyObject* set_var(PyObject* self, PyObject* args) {
+    const char *s_n, *k; PyObject *v;
+    if (!PyArg_ParseTuple(args, "ssO", &s_n, &k, &v)) return NULL;
+    PyObject* s = PyDict_GetItemString(_scopes, s_n);
+    if (!s) { s = PyDict_New(); PyDict_SetItemString(_scopes, s_n, s); }
+    PyDict_SetItemString(s, k, v); Py_RETURN_NONE;
+}
+
+static PyObject* get_var(PyObject* self, PyObject* args) {
+    const char *s_n, *k; if (!PyArg_ParseTuple(args, "ss", &s_n, &k)) return NULL;
+    PyObject* s = PyDict_GetItemString(_scopes, s_n);
+    PyObject* v = s ? PyDict_GetItemString(s, k) : NULL;
+    if (!v) { PyObject* g = PyDict_GetItemString(_scopes, "global"); v = g ? PyDict_GetItemString(g, k) : NULL; }
+    if (v) { Py_INCREF(v); return v; } Py_RETURN_NONE;
+}
+
+static PyObject* haunted_get(PyObject* self, PyObject* args) {
+    const char *s_n, *k; if (!PyArg_ParseTuple(args, "ss", &s_n, &k)) return NULL;
+    PyObject* s = PyDict_GetItemString(_scopes, s_n);
+    if (!s) { s = PyDict_New(); PyDict_SetItemString(_scopes, s_n, s); }
+    PyObject* v = micro_inc_get(s, PyUnicode_FromString(k));
+    return v;
+}
+
+// Object operations
+static PyObject* py_obj_new(PyObject* s, PyObject* a) { return micro_obj_new(); }
+static PyObject* py_obj_get(PyObject* s, PyObject* a) { PyObject *o, *k; PyArg_ParseTuple(a, "OO", &o, &k); return micro_obj_get(o, k); }
+static PyObject* py_obj_set(PyObject* s, PyObject* a) { PyObject *o, *k, *v; PyArg_ParseTuple(a, "OOO", &o, &k, &v); return micro_obj_set(o, k, v); }
+static PyObject* py_del_op(PyObject* s, PyObject* a) { PyObject *o, *k; PyArg_ParseTuple(a, "OO", &o, &k); return micro_del(o, k); }
+static PyObject* py_inc_get(PyObject* s, PyObject* a) { PyObject *o, *k; PyArg_ParseTuple(a, "OO", &o, &k); return micro_inc_get(o, k); }
+
+// List operations
+static PyObject* py_list_new(PyObject* s, PyObject* a) { return micro_list_new(); }
+static PyObject* py_append(PyObject* s, PyObject* a) { PyObject *l, *i; PyArg_ParseTuple(a, "OO", &l, &i); return micro_append(l, i); }
+static PyObject* py_pop(PyObject* s, PyObject* a) { PyObject *l, *i; PyArg_ParseTuple(a, "OO", &l, &i); return micro_pop(l, i); }
+static PyObject* py_reverse(PyObject* s, PyObject* a) { PyObject *l; PyArg_ParseTuple(a, "O", &l); return micro_reverse(l); }
+
+// Container operations
+static PyObject* py_contains(PyObject* s, PyObject* a) { PyObject *c, *i; PyArg_ParseTuple(a, "OO", &c, &i); return micro_contains(c, i); }
+static PyObject* py_slice(PyObject* s, PyObject* a) { PyObject *seq, *st, *e; PyArg_ParseTuple(a, "OOO", &seq, &st, &e); return micro_slice(seq, st, e); }
+static PyObject* py_concat(PyObject* s, PyObject* a) { PyObject *x, *y; PyArg_ParseTuple(a, "OO", &x, &y); return micro_concat(x, y); }
+
+// String operations
+static PyObject* py_str_upper(PyObject* s, PyObject* a) { PyObject *x; PyArg_ParseTuple(a, "O", &x); return micro_str_upper(x); }
+static PyObject* py_str_lower(PyObject* s, PyObject* a) { PyObject *x; PyArg_ParseTuple(a, "O", &x); return micro_str_lower(x); }
+static PyObject* py_str_split(PyObject* s, PyObject* a) { PyObject *x, *sep; PyArg_ParseTuple(a, "OO", &x, &sep); return micro_str_split(x, sep); }
+static PyObject* py_str_join(PyObject* s, PyObject* a) { PyObject *sep, *it; PyArg_ParseTuple(a, "OO", &sep, &it); return micro_str_join(sep, it); }
+static PyObject* py_str_replace(PyObject* s, PyObject* a) { PyObject *x, *o, *n; PyArg_ParseTuple(a, "OOO", &x, &o, &n); return micro_str_replace(x, o, n); }
+
+// Binary operation macros
+#define B_FUNC(n) static PyObject* py_##n(PyObject* s, PyObject* a){ PyObject *x, *y; if(!PyArg_ParseTuple(a,"OO",&x,&y))return NULL; return micro_##n(x,y); }
+#define U_FUNC(n) static PyObject* py_##n(PyObject* s, PyObject* a){ PyObject *x; if(!PyArg_ParseTuple(a,"O",&x))return NULL; return micro_##n(x); }
+
+// Arithmetic
+B_FUNC(add) B_FUNC(sub) B_FUNC(mul) B_FUNC(div) B_FUNC(mod) B_FUNC(pow) B_FUNC(floor_div)
+U_FUNC(neg) U_FUNC(abs)
+
+// Comparison
+B_FUNC(eq) B_FUNC(ne) B_FUNC(lt) B_FUNC(le) B_FUNC(gt) B_FUNC(ge)
+
+// Bitwise
+B_FUNC(bit_and) B_FUNC(bit_or) B_FUNC(bit_xor) B_FUNC(lshift) B_FUNC(rshift)
+U_FUNC(bit_not)
+
+// Logical
+U_FUNC(not) U_FUNC(truthy)
+
+// Type conversions
+U_FUNC(to_int) U_FUNC(to_float) U_FUNC(to_str) U_FUNC(to_bool)
+
+// Type info
+U_FUNC(len) U_FUNC(type) U_FUNC(keys) U_FUNC(values)
+
+static PyMethodDef Methods[] = {
+    // Scope management
+    {"set_var", set_var, METH_VARARGS, NULL}, 
+    {"get_var", get_var, METH_VARARGS, NULL},
+    {"haunted_get", haunted_get, METH_VARARGS, NULL},
+    
+    // Object operations
+    {"obj_new", py_obj_new, METH_NOARGS, NULL}, 
+    {"obj_get", py_obj_get, METH_VARARGS, NULL},
+    {"obj_set", py_obj_set, METH_VARARGS, NULL}, 
+    {"del_op", py_del_op, METH_VARARGS, NULL},
+    {"inc_get", py_inc_get, METH_VARARGS, NULL},
+    
+    // List operations
+    {"list_new", py_list_new, METH_NOARGS, NULL},
+    {"append", py_append, METH_VARARGS, NULL},
+    {"pop", py_pop, METH_VARARGS, NULL},
+    {"reverse", py_reverse, METH_VARARGS, NULL},
+    
+    // Container operations
+    {"contains", py_contains, METH_VARARGS, NULL},
+    {"slice", py_slice, METH_VARARGS, NULL},
+    {"concat", py_concat, METH_VARARGS, NULL},
+    
+    // String operations
+    {"str_upper", py_str_upper, METH_VARARGS, NULL},
+    {"str_lower", py_str_lower, METH_VARARGS, NULL},
+    {"str_split", py_str_split, METH_VARARGS, NULL},
+    {"str_join", py_str_join, METH_VARARGS, NULL},
+    {"str_replace", py_str_replace, METH_VARARGS, NULL},
+    
+    // Arithmetic
+    {"add", py_add, METH_VARARGS, NULL}, 
+    {"sub", py_sub, METH_VARARGS, NULL},
+    {"mul", py_mul, METH_VARARGS, NULL}, 
+    {"div", py_div, METH_VARARGS, NULL},
+    {"mod", py_mod, METH_VARARGS, NULL}, 
+    {"pow", py_pow, METH_VARARGS, NULL},
+    {"floor_div", py_floor_div, METH_VARARGS, NULL},
+    {"neg", py_neg, METH_VARARGS, NULL},
+    {"abs", py_abs, METH_VARARGS, NULL},
+    
+    // Comparison
+    {"eq", py_eq, METH_VARARGS, NULL},
+    {"ne", py_ne, METH_VARARGS, NULL},
+    {"lt", py_lt, METH_VARARGS, NULL},
+    {"le", py_le, METH_VARARGS, NULL},
+    {"gt", py_gt, METH_VARARGS, NULL},
+    {"ge", py_ge, METH_VARARGS, NULL},
+    
+    // Bitwise
+    {"bit_and", py_bit_and, METH_VARARGS, NULL},
+    {"bit_or", py_bit_or, METH_VARARGS, NULL},
+    {"bit_xor", py_bit_xor, METH_VARARGS, NULL},
+    {"bit_not", py_bit_not, METH_VARARGS, NULL},
+    {"lshift", py_lshift, METH_VARARGS, NULL},
+    {"rshift", py_rshift, METH_VARARGS, NULL},
+    
+    // Logical
+    {"not_op", py_not, METH_VARARGS, NULL},
+    {"truthy", py_truthy, METH_VARARGS, NULL},
+    
+    // Type conversions
+    {"to_int", py_to_int, METH_VARARGS, NULL},
+    {"to_float", py_to_float, METH_VARARGS, NULL}, 
+    {"to_str", py_to_str, METH_VARARGS, NULL},
+    {"to_bool", py_to_bool, METH_VARARGS, NULL},
+    
+    // Type info
+    {"len", py_len, METH_VARARGS, NULL}, 
+    {"type", py_type, METH_VARARGS, NULL},
+    {"keys", py_keys, METH_VARARGS, NULL},
+    {"values", py_values, METH_VARARGS, NULL},
+    
+    {NULL, NULL, 0, NULL}
+};
+
+static struct PyModuleDef module = { PyModuleDef_HEAD_INIT, "_core", NULL, -1, Methods };
+PyMODINIT_FUNC PyInit__core(void) { _scopes = PyDict_New(); Py_INCREF(_scopes); return PyModule_Create(&module); }
