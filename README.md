@@ -586,7 +586,7 @@ POLYGLOT TEST: Ruby -> Lua -> PHP
 [Lua] Item 1 (1-based indexing): Microps
 [PHP] Testing polyglot math...
 [PHP] Result: 1000.0
-[PHP] ✓ Metatable __add worked! Got 1000.0 instead of error!
+[PHP] Metatable __add worked! Got 1000.0 instead of error!
 ============================================================
 ```
 
@@ -612,7 +612,7 @@ python setup.py build_ext --inplace
 pip install -e .
 
 # Verify installation
-python -c "from microps import js; print('✓ microps installed!')"
+python -c "from microps import js; print('microps installed!')"
 ```
 
 ### Platform-Specific Notes
