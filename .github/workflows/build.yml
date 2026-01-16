@@ -1,38 +1,139 @@
-name: Build Microps Binaries
+name: Build Microps
 
-on: [push, pull_request]
+on: 
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        # Building for Linux and Windows
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4  # Updated from v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5  # Updated from v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Display Python version
+        run: python --version
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel
+          pip install setuptools wheel pytest
 
       - name: Build Extension
-        run: python setup.py build_ext --inplace
+        run: |
+          python setup.py build_ext --inplace
+          python setup.py build
 
-      - name: Upload Binaries
-        uses: actions/upload-artifact@v4  # Updated from v3
+      - name: Install Package
+        run: pip install -e .
+
+      - name: Test Import
+        run: |
+          python -c "from microps import js, lua, ruby, php, py, c; print('✓ All imports successful')"
+          python -c "from microps import _core; print(f'✓ Core module loaded with {len(dir(_core))} functions')"
+
+      - name: Run Tests
+        run: |
+          python tests/multi_language_method_test.py
+        continue-on-error: true
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: microps-${{ matrix.os }}
+          name: microps-${{ matrix.os }}-py${{ matrix.python-version }}
           path: |
             microps/*.so
             microps/*.pyd
+            microps/*.dylib
+            build/lib.*/*
+          retention-days: 7
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel pytest
+
+      - name: Build and Install
+        run: |
+          python setup.py build_ext --inplace
+          pip install -e .
+
+      - name: Run Multi-Language Test
+        run: python tests/multi_language_method_test.py
+
+      - name: Test Direct C Operations
+        run: |
+          python -c "
+          from microps import _core
+          assert _core.add(5, 3) == 8
+          assert _core.mul(4, 5) == 20
+          assert _core.str_upper('hello') == 'HELLO'
+          print('✓ Direct C operations test passed')
+          "
+
+      - name: Test Language Wrappers
+        run: |
+          python -c "
+          from microps import js, lua, ruby, php
+          
+          # Test JS
+          @js.decorator
+          def test_js():
+              x = js.Number(5) + js.String('10')
+              assert str(x) == '510'
+          test_js()
+          
+          # Test Lua truthiness
+          @lua.decorator
+          def test_lua():
+              assert bool(lua.Number(0)) == True  # 0 is truthy in Lua
+          test_lua()
+          
+          print('✓ Language wrapper tests passed')
+          "
+
+      - name: Test Polyglot Scope
+        run: |
+          python -c "
+          from microps import js, lua, shared
+          
+          @js.decorator
+          def store():
+              shared.value = js.Number(42)
+          
+          @lua.decorator
+          def retrieve():
+              assert shared.value == 42
+          
+          store()
+          retrieve()
+          print('✓ Polyglot scope test passed')
+          "

@@ -23,24 +23,48 @@ core_extension = Extension(
     'microps._core',
     sources=['microps/_core.c'] + microops_sources,
     include_dirs=['microps/include'],
-    extra_compile_args=['-O3', '-Wall'],
+    extra_compile_args=['-O3', '-Wall'] if os.name != 'nt' else ['/O2'],
 )
+
+# Read README with UTF-8 encoding (fixes Windows build issue)
+long_description = ''
+readme_path = 'README.md'
+if os.path.exists(readme_path):
+    try:
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            long_description = f.read()
+    except Exception as e:
+        print(f"Warning: Could not read README.md: {e}")
+        long_description = 'Micro Operations - Language semantics in Python via C extensions'
 
 setup(
     name='microps',
-    version='1.1.0',
+    version='1.3.0',
     description='Micro Operations - Language semantics in Python via C extensions',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='holyarahippo06',
+    author_email='',  # Add your email if desired
+    url='https://github.com/holyarahippo06/microps',
     packages=['microps', 'microps.wrappers'],
     ext_modules=[core_extension],
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
+        'Intended Audience :: Education',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Software Development :: Compilers',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: C',
-        'Topic :: Software Development :: Libraries',
+        'Operating System :: OS Independent',
     ],
-    long_description=open('README.md').read() if os.path.exists('README.md') else '',
-    long_description_content_type='text/markdown',
+    keywords='language-semantics c-extension polyglot javascript lua ruby php',
+    project_urls={
+        'Bug Reports': 'https://github.com/holyarahippo06/microps/issues',
+        'Source': 'https://github.com/holyarahippo06/microps',
+    },
 )
