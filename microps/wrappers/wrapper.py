@@ -31,9 +31,20 @@ class BaseValue:
     def __add__(self, o):
         left = self._val
         right = unwrap(o)
+        # Attempt to convert strings containing numbers to float
+        for idx, val in enumerate([left, right]):
+            if isinstance(val, str):
+                try:
+                    if idx == 0:
+                        left = float(left)
+                    else:
+                        right = float(right)
+                except ValueError:
+                    pass  # If not convertible, leave as is
         if isinstance(left, (int, float)) and isinstance(right, (int, float)):
             return self.__class__(_core.add(left, right), self._engine)
         raise TypeError(f"Cannot add {type(left).__name__} and {type(right).__name__}")
+
     def __sub__(self, o): return self.__class__(_core.sub(self._val, unwrap(o)), self._engine)
     def __mul__(self, o): return self.__class__(_core.mul(self._val, unwrap(o)), self._engine)
     def __truediv__(self, o): return self.__class__(_core.div(self._val, unwrap(o)), self._engine)
