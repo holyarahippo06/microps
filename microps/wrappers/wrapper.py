@@ -29,25 +29,47 @@ class BaseValue:
 
     # --- Reassembling Arithmetic from C ---
     def __add__(self, o):
-        left = self._val
-        right = unwrap(o)
-            # If either operand is a string, concatenate as strings (JS-like)
-        if isinstance(left, str) or isinstance(right, str):
-            result = str(left) + str(right)
-            return self.__class__(result, self._engine)
-        # Attempt to convert to float otherwise
-        for idx, val in enumerate([left, right]):
-            if isinstance(val, str):
-                try:
-                    if idx == 0:
-                        left = float(left)
-                    else:
-                        right = float(right)
-                except ValueError:
-                    pass
-        if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-            return self.__class__(_core.add(left, right), self._engine)
-        raise TypeError(f"Cannot add {type(left).__name__} and {type(right).__name__}")
+            left = self._val
+            right = unwrap(o)
+        
+            # 1) Check for metamethod on left operand (e.g. Lua/PHP metatable __add)
+            mm = get_mm(left, '__add', self._engine)
+            if mm:
+                mm_func = unwrap(mm) if mm is not None else mm
+                if callable(mm_func):
+                    return self.__class__(mm_func(left, right), self._engine)
+        
+            # 2) Check for metamethod on right operand (swapped operands)
+            mm = get_mm(right, '__add', self._engine)
+            if mm:
+                mm_func = unwrap(mm) if mm is not None else mm
+                if callable(mm_func):
+                    return self.__class__(mm_func(right, left), self._engine)
+        
+            # 3) JS-like string concatenation if either operand is a string
+            def is_str(val):
+                # Recognizes both Python str and wrapped JS strings
+                return isinstance(val, str) or (hasattr(val_, '_val') and isinstance(getattr(val, '_val', str)))
+
+            if is_str(left) or is_str(right):
+                result = str(left) + str(right)
+                return self.__class__(result, self._engine)
+        
+            # 4) Try converting string operands to numeric floats and do numeric add
+            for idx, val in enumerate([left, right]):
+                if isinstance(val, str):
+                    try:
+                        if idx == 0:
+                            left = float(left)
+                        else:
+                            right = float(right)
+                    except ValueError:
+                        pass
+        
+            if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+                return self.__class__(_core.add(left, right), self._engine)
+        
+            raise TypeError(f"Cannot add {type(left).__name__} and {type(right).__name__}")
 
     def __sub__(self, o): return self.__class__(_core.sub(self._val, unwrap(o)), self._engine)
     def __mul__(self, o): return self.__class__(_core.mul(self._val, unwrap(o)), self._engine)
