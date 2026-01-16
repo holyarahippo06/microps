@@ -31,9 +31,10 @@ class BaseValue:
     def __add__(self, o):
         left = self._val
         right = unwrap(o)
-        # If either operand is a string, concatenate as strings (JS-like)
+            # If either operand is a string, concatenate as strings (JS-like)
         if isinstance(left, str) or isinstance(right, str):
-            return self.__class__(str(left) + str(right), self._engine)
+            result = str(left) + str(right)
+            return self.__class__(result, self._engine)
         # Attempt to convert to float otherwise
         for idx, val in enumerate([left, right]):
             if isinstance(val, str):
@@ -74,7 +75,11 @@ class BaseValue:
             return self.__class__(self._val(*u_args, **kwargs), self._engine)
         return self
 
-    def __repr__(self): return str(self._val)
+    def __repr__(self):
+        return str(self._val)
+
+    def __str__(self):
+        return str(self._val)
 
 def lie_lookup(engine, func, key):
     if key.startswith('_'): raise AttributeError(key)
