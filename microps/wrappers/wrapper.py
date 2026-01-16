@@ -31,7 +31,10 @@ class BaseValue:
     def __add__(self, o):
         left = self._val
         right = unwrap(o)
-        # Attempt to convert strings containing numbers to float
+        # If either operand is a string, concatenate as strings (JS-like)
+        if isinstance(left, str) or isinstance(right, str):
+            return self.__class__(str(left) + str(right), self._engine)
+        # Attempt to convert to float otherwise
         for idx, val in enumerate([left, right]):
             if isinstance(val, str):
                 try:
@@ -40,7 +43,7 @@ class BaseValue:
                     else:
                         right = float(right)
                 except ValueError:
-                    pass  # If not convertible, leave as is
+                    pass
         if isinstance(left, (int, float)) and isinstance(right, (int, float)):
             return self.__class__(_core.add(left, right), self._engine)
         raise TypeError(f"Cannot add {type(left).__name__} and {type(right).__name__}")
