@@ -22,6 +22,12 @@ def get_mm(obj_raw, name, engine=None):
     
     return None
 
+def js_str(val):
+    """Formats numbers like JS: 5.0 -> '5', 5.5 -> '5.5'"""
+    if isinstance(val, float) and val.is_integer():
+        return str(int(val))
+    return str(val)
+
 class BaseValue:
     def __init__(self, v, engine):
         self.__dict__['_val'] = unwrap(v)
@@ -47,29 +53,13 @@ class BaseValue:
                     return self.__class__(mm_func(right, left), self._engine)
         
             # 3) JS-like string concatenation if either operand is a string
-            def is_str(val):
-                # Recognizes both Python str and wrapped JS strings
-                return isinstance(val, str) or (hasattr(val, '_val') and isinstance(getattr(val, '_val', str)))
-
-            if is_str(left) or is_str(right):
-                result = str(left) + str(right)
+            if isinstance(left, str) or isinstance(right, str):
+                result = js_str(left) + js_str(right)
                 return self.__class__(result, self._engine)
-        
-            # 4) Try converting string operands to numeric floats and do numeric add
-            for idx, val in enumerate([left, right]):
-                if isinstance(val, str):
-                    try:
-                        if idx == 0:
-                            left = float(left)
-                        else:
-                            right = float(right)
-                    except ValueError:
-                        pass
-        
+
+            # 4) Numeric Add
             if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-                return self.__class__(_core.add(left, right), self._engine)
-        
-            raise TypeError(f"Cannot add {type(left).__name__} and {type(right).__name__}")
+                return self.__class(_core.add(left, right), self._engine)
 
     def __sub__(self, o): return self.__class__(_core.sub(self._val, unwrap(o)), self._engine)
     def __mul__(self, o): return self.__class__(_core.mul(self._val, unwrap(o)), self._engine)
