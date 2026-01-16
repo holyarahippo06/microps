@@ -49,7 +49,7 @@ class BaseValue:
             # 3) JS-like string concatenation if either operand is a string
             def is_str(val):
                 # Recognizes both Python str and wrapped JS strings
-                return isinstance(val, str) or (hasattr(val_, '_val') and isinstance(getattr(val, '_val', str)))
+                return isinstance(val, str) or (hasattr(val, '_val') and isinstance(getattr(val, '_val', str)))
 
             if is_str(left) or is_str(right):
                 result = str(left) + str(right)
