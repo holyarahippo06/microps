@@ -12,7 +12,6 @@ dist/
 *.o
 *.a
 *.out
-*.txt
 
 # Environments
 .venv/
@@ -20,3 +19,6 @@ microps_venv/
 
 # Hidden OS files
 .DS_Store
+
+# Logs n stuff
+*.txt

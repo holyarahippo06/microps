@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     name: Build on ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -66,6 +67,24 @@ jobs:
             microps/*.dylib
             build/lib.*/*
           retention-days: 7
+
+      - name: Build Distribution Packages (Wheel and Source)
+            run: |
+                # This creates the .whl and .tar.gz files in the dist/ folder
+                python setup.py sdist bdist_wheel
+
+            - name: Upload Polyglot Bundle
+              uses: actions/upload-artifact@v4
+              with:
+                name: microps-builds-latest
+                path: |
+                    dist/*.whl
+                    dist/*.tar.gz
+                    microps/_core*.so
+                    microps/_core*.pyd
+                    README.md
+                    LICENSE
+                retention-days: 5
 
   test:
     name: Test Suite
