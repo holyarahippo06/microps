@@ -12,6 +12,7 @@ dist/
 *.o
 *.a
 *.out
+*.txt
 
 # Environments
 .venv/
